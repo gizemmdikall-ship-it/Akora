@@ -9,3 +9,8 @@ output/render_jobs.json
 output/renders.log
 output/animation/akora_anim.*
 anim/voices/*.onnx
+output/film/frames/
+output/film/comp/
+output/film/render.log
+output/film/preview_*.jpg
+output/film/audio/line_*.wav
