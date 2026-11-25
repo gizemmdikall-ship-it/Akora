@@ -7,3 +7,4 @@ output/step/_tmp.step
 output/glb/
 output/render_jobs.json
 output/renders.log
+output/animation/akora_anim.*
