@@ -16,12 +16,12 @@ BODY_LENGTH = 1700          # [D] 170  - track / hull length
 TOTAL_WIDTH = 2000          # [D] 200  - front view overall width
 BODY_WIDTH = 1300           # [D] 130  - hull between the tracks
 TRACK_WIDTH = 350           # [D] 35 / 34.5 - each track module
-DEPLOYED_HEIGHT = 1650      # [D] 165  - ground -> railing top, deployed
+DEPLOYED_HEIGHT = 1900      # user: railing 100 cm above the deck (drawing showed 165 total = 75 cm railing)
 DECK_Z = 900                # [S] walkway height above ground (side view)
 PLATFORM_WIDTH = 1000       # [D] 100  - platform outer width (top view)
 PLATFORM_CLEAR = 900        # [D] 90   - between side profiles (top view)
 RAIL_SPACING = 800          # [D] 80   - railing centre lines (front view)
-RAIL_HEIGHT = DEPLOYED_HEIGHT - DECK_Z   # 750 above deck (see README: below EN 14122-3)
+RAIL_HEIGHT = DEPLOYED_HEIGHT - DECK_Z   # 1000 above deck
 P1_LEN = 1100               # [D] 110  - platform 1, fixed on the hull
 P2_LEN = 1105               # [D] 110.50 - platform 2
 P3_LEN = 1200               # [D] 120  - intermediate / end platform
@@ -80,8 +80,9 @@ LINK_Y = GEAR_Y + GEAR_W + 5             # link plate inner face
 # railings
 POST_R_LOW, POST_R_UP = 21, 17           # Ø42 lower post, Ø34 telescopic upper post
 RAIL_R = 21
-POST_LOW_LEN = 400
-MID_RAIL_Z = 380
+POST_LOW_LEN = 540                       # lower post (fixed), upper post telescopes out of it
+MID_RAIL_Z = 505                         # mid rail centre ~480 above the hinge
+RAIL_TOP_LOCAL = POST_LOW_LEN + 20       # top-rail centre in the collapsed state (panel frame)
 RAIL_HINGE_Z = (28, 82)                  # staggered fold heights (left, right) -> folded pack <= 106 mm
 J1_AXIS_DZ = 10                          # J1 hinge axes 10 mm above deck: stacked deck gap = 200 + 2*10 = 220
 

@@ -60,7 +60,7 @@ def frames(st):
             ang = 90.0 * (1 - rf) * (1 if sy > 0 else -1)
             F[f"RAIL_{mod}_{tag}"] = chain(F[mod], T(0, sy * P.RAIL_SPACING / 2, hz), R("x", ang))
             # top surface of the top rail lands exactly at DEPLOYED_HEIGHT on both sides
-            ext = (P.RAIL_HEIGHT - P.RAIL_R) - hz - 420
+            ext = (P.RAIL_HEIGHT - P.RAIL_R) - hz - P.RAIL_TOP_LOCAL
             F[f"RAIL_{mod}_{tag}_UP"] = chain(F[f"RAIL_{mod}_{tag}"], T(0, 0, ext * rt))
 
     # ---- rear landing + nested step frames

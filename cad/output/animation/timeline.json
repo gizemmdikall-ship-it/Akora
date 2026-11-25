@@ -1,0 +1,126 @@
+{
+ "total": 103.464,
+ "steps": [
+  {
+   "key": "intro",
+   "num": "",
+   "title": "AKORA",
+   "text": "Sel yolu ikiye böldü. Karşı kıyıda mahsur kalan insanlar var. AKORA göreve çıkıyor.",
+   "start": 0.0,
+   "end": 9.819,
+   "voice_start": 0.35,
+   "voice_len": 8.569,
+   "wav": "narration/intro.wav"
+  },
+  {
+   "key": "drive",
+   "num": "01",
+   "title": "Paletli hareket",
+   "text": "Çift paletli şasi, ıslak ve molozlu zeminde uzaktan kumandayla su kenarına kadar ilerler.",
+   "start": 9.819,
+   "end": 17.663,
+   "voice_start": 10.169,
+   "voice_len": 6.594,
+   "wav": "narration/drive.wav"
+  },
+  {
+   "key": "scan",
+   "num": "02",
+   "title": "Sensörlerle analiz",
+   "text": "Su seviyesi ve mesafe sensörleri ile kamera, su yatağının genişliğini ve karşı kıyıyı ölçer; açılım konumu belirlenir.",
+   "start": 17.663,
+   "end": 27.302,
+   "voice_start": 18.013,
+   "voice_len": 8.389,
+   "wav": "narration/scan.wav"
+  },
+  {
+   "key": "open",
+   "num": "03",
+   "title": "Platform açılımı",
+   "text": "Ø20 cm senkron dişli menteşeler: ikinci platform dikey konuma kalkar, üçüncü platform yataya döner, iki modül birlikte 90 cm yürüyüş seviyesine iner.",
+   "start": 27.302,
+   "end": 43.721,
+   "voice_start": 27.652,
+   "voice_len": 15.169,
+   "wav": "narration/open.wav"
+  },
+  {
+   "key": "stairs",
+   "num": "04",
+   "title": "Merdivenler",
+   "text": "Arkadaki katlanır basamaklar ve öndeki 120 cm rampa merdiven zemine iner.",
+   "start": 43.721,
+   "end": 51.101,
+   "voice_start": 44.071,
+   "voice_len": 6.13,
+   "wav": "narration/stairs.wav"
+  },
+  {
+   "key": "legs",
+   "num": "05",
+   "title": "Destek ayakları",
+   "text": "Teleskopik destek ayakları karşı kıyıya basar, yükü zemine aktarır ve platformu dengeler.",
+   "start": 51.101,
+   "end": 58.725,
+   "voice_start": 51.451,
+   "voice_len": 6.374,
+   "wav": "narration/legs.wav"
+  },
+  {
+   "key": "rails",
+   "num": "06",
+   "title": "Korkuluklar",
+   "text": "100 cm yüksekliğindeki reflektörlü korkuluklar kalkar ve kilitlenir. 6 m uzunluğunda güvenli tahliye yolu hazır.",
+   "start": 58.725,
+   "end": 68.793,
+   "voice_start": 59.075,
+   "voice_len": 8.818,
+   "wav": "narration/rails.wav"
+  },
+  {
+   "key": "evac",
+   "num": "07",
+   "title": "İnsan tahliyesi",
+   "text": "Mahsur kalanlar suya girmeden, kaymaz platform üzerinden güvenli bölgeye geçer.",
+   "start": 68.793,
+   "end": 75.639,
+   "voice_start": 69.143,
+   "voice_len": 5.596,
+   "wav": "narration/evac.wav"
+  },
+  {
+   "key": "evac2",
+   "num": "07",
+   "title": "İnsan tahliyesi",
+   "text": "Kaymaz yüzey ve iki yandaki korkuluklar; çocuk ve yaşlı dahil herkes için güvenli geçiş.",
+   "start": 75.639,
+   "end": 87.793,
+   "voice_start": 75.989,
+   "voice_len": 7.419,
+   "wav": "narration/evac2.wav"
+  },
+  {
+   "key": "close",
+   "num": "08",
+   "title": "Kapanma",
+   "text": "Tahliye tamamlanınca korkuluklar, ayaklar, merdivenler ve platformlar ters sırayla katlanır; robot taşıma konumuna döner.",
+   "start": 87.793,
+   "end": 98.464,
+   "voice_start": 88.143,
+   "voice_len": 9.422,
+   "wav": "narration/close.wav"
+  },
+  {
+   "key": "end",
+   "num": "",
+   "title": "AKORA",
+   "text": "Sel ve taşkında güvenli tahliye yolu.",
+   "start": 98.464,
+   "end": 103.464,
+   "voice_start": 98.814,
+   "voice_len": 3.628,
+   "wav": "narration/end.wav"
+  }
+ ]
+}

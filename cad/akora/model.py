@@ -601,24 +601,24 @@ def build_railings():
                 add(f"RAIL_POST_LOWER_{mod}_{tag}_{x}", ("05_GUARDRAIL_SYSTEM", "RAILING_VERTICAL"), "brushed", lp, frame=fr_low, group=grp)
                 col = tube(P.POST_R_LOW + 3, P.POST_R_LOW, 22, "z", (x, 0, P.POST_LOW_LEN - 23))
                 add(f"RAIL_TELESCOPE_LOCK_COLLAR_{mod}_{tag}_{x}", ("05_GUARDRAIL_SYSTEM", "RAILING_LOCKS"), "orange", col, frame=fr_low, group=grp)
-                up = tube(P.POST_R_UP, P.POST_R_UP - 2, 372, "z", (x, 0, 28))
+                up = tube(P.POST_R_UP, P.POST_R_UP - 2, P.RAIL_TOP_LOCAL - P.RAIL_R - 28, "z", (x, 0, 28))
                 add(f"RAIL_POST_UPPER_{mod}_{tag}_{x}", ("05_GUARDRAIL_SYSTEM", "RAILING_VERTICAL"), "brushed", up, frame=fr_up, group=grp)
-                cap = tube(P.POST_R_UP + 1.5, P.POST_R_UP, 40, "z", (x, 0, 330))
+                cap = tube(P.POST_R_UP + 1.5, P.POST_R_UP, 40, "z", (x, 0, P.RAIL_TOP_LOCAL - 110))
                 add(f"RAIL_POST_REFLECTOR_CAP_{mod}_{tag}_{x}", ("05_GUARDRAIL_SYSTEM", "RAILING_VERTICAL"), "reflector", cap, frame=fr_up, group=grp)
             mid = tube_between((xs[0], 0, P.MID_RAIL_Z - 25), (xs[-1], 0, P.MID_RAIL_Z - 25), P.RAIL_R, P.RAIL_R - 2.5)
             for x in xs:                       # saddle-welded onto the posts, never into the post bore
                 mid = mid.cut(cyl(P.POST_R_LOW, 200, "z", (x, 0, P.MID_RAIL_Z - 125)))
             add(f"RAIL_MID_{mod}_{tag}", ("05_GUARDRAIL_SYSTEM", "RAILING_HORIZONTAL"), "brushed", mid, frame=fr_low, group=grp)
-            top = tube_between((xs[0] - 40, 0, 420), (xs[-1] + 40, 0, 420), P.RAIL_R, P.RAIL_R - 2.5)
+            top = tube_between((xs[0] - 40, 0, P.RAIL_TOP_LOCAL), (xs[-1] + 40, 0, P.RAIL_TOP_LOCAL), P.RAIL_R, P.RAIL_R - 2.5)
             add(f"RAIL_TOP_{mod}_{tag}", ("05_GUARDRAIL_SYSTEM", "RAILING_HORIZONTAL"), "brushed", top, frame=fr_up, group=grp)
             for xe, d in ((xs[0] - 40, -1), (xs[-1] + 40, 1)):
-                capb = cq.Workplane("XY").sphere(P.RAIL_R).translate((xe, 0, 420)).intersect(
-                    box(xe if d > 0 else xe - 30, xe + 30 if d > 0 else xe, -30, 30, 380, 460))
+                capb = cq.Workplane("XY").sphere(P.RAIL_R).translate((xe, 0, P.RAIL_TOP_LOCAL)).intersect(
+                    box(xe if d > 0 else xe - 30, xe + 30 if d > 0 else xe, -30, 30, P.RAIL_TOP_LOCAL - 40, P.RAIL_TOP_LOCAL + 40))
                 add(f"RAIL_END_CAP_{mod}_{tag}_{int(xe)}", ("05_GUARDRAIL_SYSTEM", "RAILING_HORIZONTAL"), "polymer_dark",
                     capb, frame=fr_up, group=grp)
             # reflector strips on top rail (inside face)
             for x in np.linspace(xs[0] + 150, xs[-1] - 150, 2):
-                rf = box(x - 60, x + 60, -P.RAIL_R - 4 if sy > 0 else P.RAIL_R + 1, -P.RAIL_R - 1 if sy > 0 else P.RAIL_R + 4, 410, 430)
+                rf = box(x - 60, x + 60, -P.RAIL_R - 4 if sy > 0 else P.RAIL_R + 1, -P.RAIL_R - 1 if sy > 0 else P.RAIL_R + 4, P.RAIL_TOP_LOCAL - 10, P.RAIL_TOP_LOCAL + 10)
                 add(f"RAIL_REFLECTOR_{mod}_{tag}_{int(x)}", ("05_GUARDRAIL_SYSTEM", "RAILING_VERTICAL"), "reflector", rf, frame=fr_up, group=grp)
             # hinge lock pins (index pins at first and last post)
             for x in (xs[0], xs[-1]):

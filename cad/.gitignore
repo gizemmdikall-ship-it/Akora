@@ -8,3 +8,4 @@ output/glb/
 output/render_jobs.json
 output/renders.log
 output/animation/akora_anim.*
+anim/voices/*.onnx

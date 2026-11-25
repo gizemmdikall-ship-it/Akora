@@ -20,7 +20,6 @@ from akora.kinematics import frames  # noqa: E402
 from akora.materials import MATERIALS  # noqa: E402
 
 FPS = 30
-DUR = 60.0
 OUT = os.path.join(ROOT, "output", "animation")
 
 
@@ -32,26 +31,30 @@ def ease(x):
     return x * x * (3 - 2 * x)
 
 
-# ------------------------------------------------------------------ timeline (seconds)
+# ------------------------------------------------------------------ timeline (seconds, from anim/timeline.py)
+TL = json.load(open(os.path.join(OUT, "timeline.json"), encoding="utf-8"))
+DUR = TL["total"]
+WIN = {s["key"]: (s["start"], s["end"]) for s in TL["steps"]}
+DRIVE_FROM = -7000.0
+
+
 def state_at(t):
-    """Robot state + root x (mm) for time t. Same timing is used for captions in anim.html."""
-    e = lambda a, b: ease(seg(t, a, b))
-    drive = e(0.5, 8.0)
-    x_root = -5000 * (1 - drive)
-    # opening (PDF order): P2 to vertical tower -> P3 swings level -> both down
-    j1 = 0.5 * e(12.0, 15.0) + 0.5 * e(17.0, 21.0)
-    j2 = 0.5 * e(15.0, 17.0) + 0.5 * e(17.0, 21.0)
-    rs = e(21.0, 25.0)
-    fs = e(21.5, 25.5)
-    legs = e(25.5, 28.5)
-    rails = e(28.5, 31.5)
-    # closing (reverse order)
-    rails -= e(45.0, 46.5)
-    legs -= e(46.5, 48.0)
-    rs -= e(48.0, 50.5)
-    fs -= e(48.0, 50.5)
-    j1 -= 0.5 * e(50.5, 52.5) + 0.5 * e(53.5, 55.5)
-    j2 -= 0.5 * e(50.5, 52.5) + 0.5 * e(52.5, 53.5)
+    """Robot state + root x (mm) for time t; every motion sits inside the sentence that explains it."""
+    def f(key, a, b):
+        s, e = WIN[key]
+        return ease(seg(t, s + a * (e - s), s + b * (e - s)))
+    drive = ease(seg(t, 1.5, WIN["drive"][1] - 0.6))
+    x_root = DRIVE_FROM * (1 - drive)
+    j1 = 0.5 * f("open", 0.05, 0.35) + 0.5 * f("open", 0.55, 0.95)
+    j2 = 0.5 * f("open", 0.35, 0.52) + 0.5 * f("open", 0.55, 0.95)
+    rs, fs = f("stairs", 0.05, 0.85), f("stairs", 0.15, 0.95)
+    legs, rails = f("legs", 0.1, 0.9), f("rails", 0.05, 0.55)
+    rails -= f("close", 0.0, 0.12)
+    legs -= f("close", 0.12, 0.25)
+    rs -= f("close", 0.25, 0.45)
+    fs -= f("close", 0.25, 0.45)
+    j1 -= 0.5 * f("close", 0.45, 0.65) + 0.5 * f("close", 0.78, 0.97)
+    j2 -= 0.5 * f("close", 0.45, 0.65) + 0.5 * f("close", 0.65, 0.78)
     st = dict(j1=j1, j2=j2, rs=rs, fs=fs, legs=legs, rails=rails, cover="on")
     return st, x_root, drive
 
@@ -144,7 +147,7 @@ def main():
     keys = sorted(nodes.keys())
     lf0, Lp = link_frames(0)
     n_links = len(lf0)
-    N = int(DUR * FPS)
+    N = int(math.ceil(DUR * FPS))
     K = len(keys) + 2 * n_links
     data = np.zeros((N, K, 16), np.float32)
     roots = []
@@ -160,7 +163,7 @@ def main():
         for k, key in enumerate(keys):
             data[i, k] = (R @ F[key]).T.reshape(-1)
         # belt circulation: bottom run stays still on the ground while the hull moves
-        lfs, _ = link_frames(BELT_SIGN * (xr + 5000))
+        lfs, _ = link_frames(BELT_SIGN * (xr - DRIVE_FROM))
         for s, side in enumerate(("L", "R")):
             for j, M in enumerate(lfs):           # right side uses the mirrored template, same placement
                 data[i, len(keys) + s * n_links + j] = (R @ M).T.reshape(-1)
