@@ -1,0 +1,22 @@
+{
+  "C01_CLOSED_ROBOT": {
+    "length": 175.5,
+    "width": 199.4,
+    "height": 188.5,
+    "x_min": -2.0,
+    "x_max": 173.5
+  },
+  "C12_FULLY_DEPLOYED": {
+    "length": 602.8,
+    "width": 199.4,
+    "height": 165.0,
+    "x_min": -82.8,
+    "x_max": 520.0
+  },
+  "deck_height_cm": 90.0,
+  "P3_deck_height_cm": 90.0,
+  "estimated_mass_kg": 1880.7,
+  "part_count": 667,
+  "drilled_features": 326,
+  "invalid_shapes": []
+}

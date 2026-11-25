@@ -1,0 +1,72 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AKORA render</title>
+<style>html,body{margin:0;background:#dfe2e6;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const job = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+const W = job.w || 1600, H = job.h || 1000;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = job.exposure || 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+// studio gradient background
+const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 256);
+gr.addColorStop(0, job.bgTop || '#f4f5f7'); gr.addColorStop(1, job.bgBottom || '#c9ced5');
+g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+const bg = new THREE.CanvasTexture(c); bg.colorSpace = THREE.SRGBColorSpace; scene.background = bg;
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.85;
+
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(-300, 700, 450); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+const sc = sun.shadow.camera; sc.left = -700; sc.right = 700; sc.top = 700; sc.bottom = -700; sc.near = 10; sc.far = 3000;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xdfe8ff, 0.6); fill.position.set(500, 300, -400); scene.add(fill);
+
+if (!job.noGround) {
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000),
+    new THREE.ShadowMaterial({ opacity: 0.28 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.05; ground.receiveShadow = true; scene.add(ground);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(2500, 64),
+    new THREE.MeshStandardMaterial({ color: 0xd3d7dc, roughness: 0.95 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.2; floor.receiveShadow = true; scene.add(floor);
+}
+
+const cam = new THREE.PerspectiveCamera(job.fov || 30, W / H, 1, 20000);
+cam.position.set(...job.cam); cam.lookAt(new THREE.Vector3(...job.target));
+
+new GLTFLoader().load(job.glb, (gltf) => {
+  gltf.scene.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = true; o.receiveShadow = true;
+      o.geometry.computeVertexNormals();
+      const m = o.material;
+      if (m && m.transparent) { m.depthWrite = false; o.castShadow = false; }
+    }
+  });
+  scene.add(gltf.scene);
+  for (const ann of (job.lines || [])) {   // explode axes etc.
+    const geo = new THREE.BufferGeometry().setFromPoints(ann.map(p => new THREE.Vector3(...p)));
+    const ln = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: 0x555555, dashSize: 6, gapSize: 4 }));
+    ln.computeLineDistances(); scene.add(ln);
+  }
+  renderer.render(scene, cam);
+  window.__done = true;
+}, undefined, (e) => { window.__err = String(e); });
+</script></body></html>

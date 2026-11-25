@@ -1,0 +1,6 @@
+{
+  "name": "akora-render-tools",
+  "private": true,
+  "description": "Headless three.js renderer for the AKORA CAD outputs",
+  "dependencies": { "three": "0.169.0" }
+}
