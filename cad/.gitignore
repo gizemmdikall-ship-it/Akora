@@ -14,3 +14,4 @@ output/film/comp/
 output/film/render.log
 output/film/preview_*.jpg
 output/film/audio/line_*.wav
+output/film/prev/

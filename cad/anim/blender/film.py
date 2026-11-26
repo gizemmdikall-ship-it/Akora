@@ -26,7 +26,8 @@ from akora.kinematics import frames as kin_frames  # noqa: E402
 FPS = 12
 OUT = os.path.join(ROOT, "output", "film")
 FRAMES = os.path.join(OUT, "frames")
-FLOOD_Z = 0.09                     # shallow flood over the whole street (m)
+FLOOD_Z = 0.06                     # shallow flood: tracks stand ~6 cm deep at the water edge
+DRY_X, DRY_Z = -0.84, 0.10          # safe side rises out of the water: rear stair foot lands on dry ground
 
 
 def ease(x):
@@ -137,9 +138,17 @@ def build_street():
     asph, curb = S.mat_asphalt(), S.mat_simple("Curb", (0.33, 0.31, 0.29), 0.8, bump=0.3, scale=25)
     stone = S.mat_simple("Stone", (0.2, 0.18, 0.16), 0.85, bump=0.6, scale=12)
     mud = S.mat_simple("Mud", (0.05, 0.035, 0.02), 0.9)
-    S.add_box("OuterA", -250, S.CH0 - 0.25, -250, 250, -0.6, -0.02, S.mat_simple("OuterGround", (0.05, 0.045, 0.04), 0.9))
+    S.add_box("OuterA", -250, DRY_X, -250, 250, -0.6, DRY_Z - 0.02, S.mat_simple("OuterGround", (0.05, 0.045, 0.04), 0.9))
+    S.add_box("OuterA2", DRY_X, S.CH0 - 0.25, -250, 250, -0.6, -0.02, bpy.data.materials["OuterGround"])
     S.add_box("OuterB", S.CH1 + 0.25, 250, -250, 250, -0.6, -0.02, bpy.data.materials["OuterGround"])
-    S.add_box("NearRoad", -80, S.CH0, -8, 8, -0.3, 0.0, asph)
+    S.add_box("NearRoadDry", -80, DRY_X, -8, 8, -0.3, DRY_Z, asph)
+    S.add_box("NearRoad", 0.0, S.CH0, -8, 8, -0.3, 0.0, asph)
+    ramp = S.add_box("Ramp", DRY_X, 0.0, -8, 8, -0.3, 0.0, asph)          # gentle slope out of the water
+    me = ramp.data
+    for v in me.vertices:
+        wx = ramp.matrix_world @ v.co
+        if wx.z > -0.1:
+            v.co.z = DRY_Z * max(0.0, min(1.0, -wx.x / -DRY_X)) - ramp.location.z
     S.add_box("FarRoad", S.CH1, 80, -8, 8, -0.3, 0.0, asph)
     S.add_box("WallA", S.CH0 - 0.25, S.CH0, -60, 60, -1.6, 0.0, stone)
     S.add_box("WallB", S.CH1, S.CH1 + 0.25, -60, 60, -1.6, 0.0, stone)
@@ -250,10 +259,15 @@ def build_studio():
     return c
 
 
+_VIS = {}
+
+
 def set_visible(c, on):
+    if _VIS.get(c.name) == on:
+        return
+    _VIS[c.name] = on
     for o in c.all_objects:
         o.hide_render = not on
-        o.hide_viewport = not on
 
 
 # ------------------------------------------------------------------ people
@@ -333,8 +347,8 @@ PEOPLE_SPEC = [("a", 1.75, (0.03, 0.12, 0.35), (0.02, 0.02, 0.025), (0.55, 0.36,
                ("d", 1.71, (0.25, 0.07, 0.2), (0.06, 0.065, 0.07), (0.6, 0.45, 0.33), (0.4, 0.4, 0.38), False)]
 WAIT = [(7.0, 0.4, 0.2), (6.9, -0.2, 0.2), (7.35, -0.7, 0.2), (7.45, 0.7, 0.2)]
 ROUTE = [(5.55, 0, 0.2), (5.33, 0, 0.2), (4.3, 0, 0.9), (-0.04, 0, 0.9), (-0.06, 0, 0.72), (-0.2, 0, 0.72), (-0.24, 0, 0.54),
-         (-0.4, 0, 0.54), (-0.44, 0, 0.36), (-0.6, 0, 0.36), (-0.64, 0, 0.18), (-0.8, 0, 0.18), (-0.84, 0, 0.0), (-3.0, 2.5, 0.0),
-         (-3.6, 6.5, 0.0), (-3.8, 8.3, 0.2)]
+         (-0.4, 0, 0.54), (-0.44, 0, 0.36), (-0.6, 0, 0.36), (-0.64, 0, 0.18), (-0.8, 0, 0.18), (-0.86, 0, 0.1), (-3.0, 2.5, 0.1),
+         (-3.6, 6.5, 0.1), (-3.8, 8.3, 0.2)]
 ORDER = ["b", "a", "d", "c"]                # child first, rescuer right behind
 WALK_T0 = 66.0
 
@@ -432,6 +446,7 @@ class Film:
     def __init__(self):
         bpy.ops.wm.read_factory_settings(use_empty=True)
         S.render_settings(1280, 720, 12)
+        bpy.context.scene.render.use_persistent_data = os.environ.get("AKORA_PERSIST", "0") == "1"
         self.street, self.water = build_street()
         self.street_world = bpy.context.scene.world
         self.sun = bpy.data.objects["Sun"]
@@ -456,12 +471,22 @@ class Film:
             yield from lst
 
     def show_robot(self, r, on):
+        if getattr(r, "_shown", None) == on:
+            return
+        r._shown = on
         for o in self.robot_objs(r):
             o.hide_render = not on
 
-    def set_state(self, r, st, x=0.0, y=0.0, belt=0.0):
+    @staticmethod
+    def ground(xw):
+        return DRY_Z * max(0.0, min(1.0, xw / DRY_X))
+
+    def set_state(self, r, st, x=0.0, y=0.0, belt=0.0, street=False):
         F = kin_frames(st)
-        R = Matrix.Translation((x * 1000.0, y * 1000.0, 0))
+        zr, zf = (self.ground(x + 0.22), self.ground(x + 1.48)) if street else (0.0, 0.0)
+        pitch = math.atan2(zf - zr, 1.26)
+        R = (Matrix.Translation((x * 1000.0, y * 1000.0, zr * 1000.0)) @ Matrix.Translation((220, 0, 0))
+             @ Matrix.Rotation(-pitch, 4, "Y") @ Matrix.Translation((-220, 0, 0)))
         for key, lst in r.nodes.items():
             M = R @ Matrix(F[key].tolist())
             for o in lst:
@@ -501,7 +526,7 @@ class Film:
         else:
             st = CLOSED
         belt = s.get("belt", 0.0) * (t - s["t0"])
-        self.set_state(self.robot, st, x=x, belt=belt)
+        self.set_state(self.robot, st, x=x, belt=belt, street=(s["set"] == "street"))
         if s["set"] == "studio2":
             if self.robot2 is None:
                 self.robot2 = S.Robot()
