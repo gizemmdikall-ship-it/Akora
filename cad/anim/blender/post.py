@@ -54,12 +54,13 @@ class Post:
             self.dims.update({int(k): v for k, v in json.load(open(p)).items()})
         self.fc, self.fs, self.flogo, self.fsc = font(F, 23), font(FB, 15), font(FB, 30), font(F, 15)
 
-    def compose(self, i):
-        t = i / FPS
-        src = os.path.join(FRAMES, f"f_{i:05d}.jpg")
+    def compose(self, i, t=None, base=None):
+        t = i / FPS if t is None else t
+        i = int(round(t * FPS))
+        src = base or os.path.join(FRAMES, f"f_{i:05d}.jpg")
         if t >= 111 or not os.path.exists(src):
             return self.end_card(t)
-        im = Image.open(src).convert("RGBA")
+        im = Image.open(src).convert("RGB").resize((W, H)).convert("RGBA")
         ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
         d = ImageDraw.Draw(ov)
         # logo
@@ -132,7 +133,66 @@ class Post:
         return im
 
 
+USER_VIDEO = os.environ.get("AKORA_USER_VIDEO", os.path.join(ROOT, "reference", "akora_kullanici_animasyonu.mp4"))
+# product shots taken from the designer's own animation: (film t0, film t1, source t0, source t1)
+INSERTS = [  # (film t0, film t1, source t0, source t1, smooth) - smooth=True: motion-interpolated slow motion
+    (12.0, 15.15, 0.0, 1.70, False), (15.15, 16.0, 10.45, 10.9, False),          # 2A closed robot
+    (16.0, 19.0, 9.0, 10.4, False),                                             # 2B track close-up
+    (100.0, 102.6, 2.0, 3.7, False), (102.6, 104.5, 6.75, 8.0, False), (104.5, 106.0, 8.0, 9.0, False),  # 7A
+    (106.0, 111.0, 4.0, 5.6, True),                                             # 7B walk over the deck
+]
+FPS_OUT = 24
+
+
+def assemble():
+    raw = os.path.join(FILM, "raw24")
+    ins = os.path.join(FILM, "inserts")
+    comp = os.path.join(FILM, "comp24")
+    for d in (raw, ins, comp):
+        os.makedirs(d, exist_ok=True)
+    n_rendered = len(glob.glob(os.path.join(FRAMES, "f_*.jpg")))
+    if not glob.glob(os.path.join(raw, "r_*.jpg")):
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-framerate", str(FPS), "-i", os.path.join(FRAMES, "f_%05d.jpg"),
+                        "-vf",
+                        "minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1:scd=fdiff:scd_threshold=8",
+                        "-q:v", "2", "-start_number", "0", os.path.join(raw, "r_%05d.jpg")], check=True)
+    for k, (a, b, sa, sb, smooth) in enumerate(INSERTS):
+        for old in glob.glob(os.path.join(ins, f"i{k}_*.jpg")):
+            os.remove(old)
+        speed = (sb - sa) / (b - a)
+        interp = "minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" if smooth else "fps=24"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(sa), "-t", str(sb - sa), "-i", USER_VIDEO, "-an", "-vf",
+                        f"setpts=PTS/{speed:.5f},{interp},scale={W}:{H}",
+                        "-q:v", "2", "-start_number", "0", os.path.join(ins, f"i{k}_%05d.jpg")], check=True)
+    p = Post()
+    total = int(DUR_OUT * FPS_OUT)
+    for f in range(total):
+        t = f / FPS_OUT
+        base = None
+        for k, (a, b, sa, sb, _sm) in enumerate(INSERTS):
+            if a <= t < b:
+                fr = sorted(glob.glob(os.path.join(ins, f"i{k}_*.jpg")))
+                base = fr[min(len(fr) - 1, int((t - a) * FPS_OUT))]
+        if base is None:
+            cand = os.path.join(raw, f"r_{f:05d}.jpg")
+            base = cand if os.path.exists(cand) else None
+        if base is None and t < 111:
+            base = os.path.join(raw, f"r_{min(f, n_rendered * 2 - 3):05d}.jpg")
+        p.compose(0, t=t, base=base).save(os.path.join(comp, f"c_{f:05d}.jpg"), quality=94)
+    out = os.path.join(FILM, "AKORA_tanitim_filmi.mp4")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-framerate", str(FPS_OUT), "-i", os.path.join(comp, "c_%05d.jpg"),
+                    "-i", os.path.join(FILM, "audio", "film_audio.wav"), "-c:v", "libx264", "-preset", "slow", "-crf", "18",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out], check=True)
+    print("written", out)
+
+
+DUR_OUT = 115.0
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "assemble":
+        assemble()
+        return
     p = Post()
     if len(sys.argv) > 2 and sys.argv[1] == "preview":
         for k in sys.argv[2].split(","):

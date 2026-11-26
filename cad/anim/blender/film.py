@@ -169,11 +169,8 @@ def build_street():
     oc.choppiness = 0.9; oc.wind_velocity = 6.0; oc.wave_direction = math.radians(90); oc.damping = 0.4
     m, nt, b = S.node_mat("FloodWater")
     S.set_in(b, "Base Color", (0.13, 0.085, 0.045, 1)); S.set_in(b, "Roughness", 0.16); S.set_in(b, "IOR", 1.33)
-    S.set_in(b, ["Transmission Weight", "Transmission"], 0.3)
+    S.set_in(b, ["Transmission Weight", "Transmission"], 0.0)
     S.noise_bump(nt, b, scale=9.0, strength=0.25, detail=6.0)
-    vol = nt.nodes.new("ShaderNodeVolumeAbsorption")
-    vol.inputs["Color"].default_value = (0.45, 0.3, 0.15, 1); vol.inputs["Density"].default_value = 3.0
-    nt.links.new(vol.outputs[0], nt.nodes["Material Output"].inputs["Volume"])
     w.data.materials.append(m)
     bpy.ops.object.shade_smooth()
     # buildings
@@ -408,7 +405,7 @@ class People:
 
 # ------------------------------------------------------------------ rain
 class Rain:
-    def __init__(self, n=2600):
+    def __init__(self, n=1400):
         self.n = n
         rng = np.random.default_rng(3)
         self.seed = np.c_[rng.uniform(-9, 9, n), rng.uniform(-9, 9, n), rng.uniform(0, 7, n), rng.uniform(0.85, 1.15, n)]
